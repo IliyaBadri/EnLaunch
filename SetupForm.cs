@@ -41,6 +41,12 @@ namespace EnLaunch
                 messageDialog.ShowDialog();
                 return;
             }
+
+            ControlForm controlForm = new(selectedPath);
+
+            this.Hide();
+            controlForm.ShowDialog();
+            this.Close();
         }
     }
 }
