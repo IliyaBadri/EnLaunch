@@ -32,6 +32,7 @@
             UsernameTableLayoutPanel = new TableLayoutPanel();
             UsernameLabel = new Label();
             UsernameTextBox = new TextBox();
+            MicrosoftLoginButton = new Button();
             DownloadTableLayoutPanel = new TableLayoutPanel();
             DownloadLabel = new Label();
             DownloadsComboBox = new ComboBox();
@@ -86,9 +87,11 @@
             UsernameTableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             UsernameTableLayoutPanel.Controls.Add(UsernameLabel, 0, 0);
             UsernameTableLayoutPanel.Controls.Add(UsernameTextBox, 0, 1);
+            UsernameTableLayoutPanel.Controls.Add(MicrosoftLoginButton, 0, 2);
             UsernameTableLayoutPanel.Location = new Point(102, 142);
             UsernameTableLayoutPanel.Name = "UsernameTableLayoutPanel";
-            UsernameTableLayoutPanel.RowCount = 2;
+            UsernameTableLayoutPanel.RowCount = 3;
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             UsernameTableLayoutPanel.Size = new Size(192, 133);
@@ -111,6 +114,17 @@
             UsernameTextBox.Size = new Size(186, 23);
             UsernameTextBox.TabIndex = 1;
             UsernameTextBox.Text = "steve";
+            // 
+            // MicrosoftLoginButton
+            // 
+            MicrosoftLoginButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            MicrosoftLoginButton.Location = new Point(3, 47);
+            MicrosoftLoginButton.Name = "MicrosoftLoginButton";
+            MicrosoftLoginButton.Size = new Size(186, 32);
+            MicrosoftLoginButton.TabIndex = 2;
+            MicrosoftLoginButton.Text = "Login Using Microsoft";
+            MicrosoftLoginButton.UseVisualStyleBackColor = true;
+            MicrosoftLoginButton.Click += MicrosoftLoginButton_Click;
             // 
             // DownloadTableLayoutPanel
             // 
@@ -351,5 +365,6 @@
         private TableLayoutPanel DownloadControlsTableLayoutPanel;
         private Button DownloadButton;
         private Button RefreshDownloadsButton;
+        private Button MicrosoftLoginButton;
     }
 }

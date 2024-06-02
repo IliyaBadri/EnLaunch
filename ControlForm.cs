@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CmlLib.Core;
 using CmlLib.Core.Auth;
+using CmlLib.Core.Auth.Microsoft;
 using CmlLib.Core.Downloader;
 using CmlLib.Core.Version;
 using CmlLib.Core.VersionLoader;
@@ -26,6 +27,7 @@ namespace EnLaunch
             PlayButton.Enabled = enabled;
             RefreshButton.Enabled = enabled;
             RefreshDownloadsButton.Enabled = enabled;
+            MicrosoftLoginButton.Enabled = enabled;
         }
 
         private void ChangeStatus(DownloadFileChangedEventArgs eventArgs)
@@ -41,6 +43,7 @@ namespace EnLaunch
 
         private readonly CMLauncher globalLauncher;
         private readonly MinecraftPath minecraftPath;
+        private MSession? microsoftSession;
 
         public ControlForm(string launcherPath)
         {
@@ -157,7 +160,16 @@ namespace EnLaunch
 
             try
             {
-                MSession session = MSession.CreateOfflineSession(UsernameTextBox.Text);
+
+                MSession session;
+
+                if(microsoftSession == null)
+                {
+                    session = MSession.CreateOfflineSession(UsernameTextBox.Text);
+                } else
+                {
+                    session = microsoftSession;
+                }
 
                 MLaunchOption launchOptions = new()
                 {
@@ -165,11 +177,34 @@ namespace EnLaunch
                 };
                 var process = await globalLauncher.CreateProcessAsync(versionString, launchOptions, checkAndDownload: false);
                 process.Start();
-            } catch
+            }
+            catch
             {
                 MessageDialog messageDialog = new("Error", "There was an error while starting the game process.");
                 messageDialog.ShowDialog();
             }
+        }
+
+        private async void MicrosoftLoginButton_Click(object sender, EventArgs e)
+        {
+            ToggleFunctionality(false);
+            try
+            {
+                JELoginHandler loginHandler = JELoginHandlerBuilder.BuildDefault();
+                microsoftSession = await loginHandler.Authenticate();
+
+                UsernameTextBox.ReadOnly = true;
+
+                if (microsoftSession.Username != null)
+                {
+                    UsernameTextBox.Text = microsoftSession.Username;
+                }
+            } catch
+            {
+                MessageDialog messageDialog = new("Error", "There was an error while signing into your microsoft account.");
+                messageDialog.ShowDialog();
+            }
+            ToggleFunctionality(true);
         }
     }
 }
