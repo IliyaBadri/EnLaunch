@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SetupForm));
             TableLayoutPanel = new TableLayoutPanel();
             AddressLabel = new Label();
             FileBrowserTableLayoutPanel = new TableLayoutPanel();
@@ -118,6 +119,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(584, 361);
             Controls.Add(TableLayoutPanel);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "SetupForm";
             Text = "Setup";
             TableLayoutPanel.ResumeLayout(false);

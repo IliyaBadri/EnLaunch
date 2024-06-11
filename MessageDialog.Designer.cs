@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessageDialog));
             TitleLabel = new Label();
             TextLabel = new Label();
             OkButton = new Button();
@@ -70,6 +71,7 @@
             Controls.Add(OkButton);
             Controls.Add(TextLabel);
             Controls.Add(TitleLabel);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MessageDialog";
             Text = "Message";
             ResumeLayout(false);
