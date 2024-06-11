@@ -6,7 +6,21 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>EnLaunch.ico</ApplicationIcon>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="EnLaunch.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CmlLib.Core" Version="3.3.10" />
