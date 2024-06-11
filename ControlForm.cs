@@ -16,6 +16,7 @@ using CmlLib.Core.Downloader;
 using CmlLib.Core.Version;
 using CmlLib.Core.VersionLoader;
 using CmlLib.Core.VersionMetadata;
+using Microsoft.VisualBasic.Devices;
 
 namespace EnLaunch
 {
@@ -28,6 +29,7 @@ namespace EnLaunch
             RefreshButton.Enabled = enabled;
             RefreshDownloadsButton.Enabled = enabled;
             MicrosoftLoginButton.Enabled = enabled;
+            MemoryTrackBar.Enabled = enabled;
         }
 
         private void ChangeStatus(DownloadFileChangedEventArgs eventArgs)
@@ -56,6 +58,17 @@ namespace EnLaunch
             globalLauncher.FileChanged += ChangeStatus;
 
             globalLauncher.ProgressChanged += ChangeProgress;
+
+            MemoryTrackBar_ValueChanged(this, new EventArgs());
+        }
+
+        private int GetAvailableMemory()
+        {
+
+            ComputerInfo computerInfo = new ComputerInfo();
+            ulong availableMemoryBytes = computerInfo.TotalPhysicalMemory;
+            float availableMemoryGB = availableMemoryBytes / (1024f * 1024f * 1024f);
+            return (int)availableMemoryGB;
         }
 
         private async void DownloadButton_Click(object sender, EventArgs e)
@@ -163,17 +176,21 @@ namespace EnLaunch
 
                 MSession session;
 
-                if(microsoftSession == null)
+                if (microsoftSession == null)
                 {
                     session = MSession.CreateOfflineSession(UsernameTextBox.Text);
-                } else
+                }
+                else
                 {
                     session = microsoftSession;
                 }
 
+                int selectedMemoryAmountMB = MemoryTrackBar.Value * 1024;
                 MLaunchOption launchOptions = new()
                 {
-                    Session = session
+                    Session = session,
+                    MinimumRamMb = 1024,
+                    MaximumRamMb = selectedMemoryAmountMB
                 };
                 var process = await globalLauncher.CreateProcessAsync(versionString, launchOptions, checkAndDownload: false);
                 process.Start();
@@ -199,12 +216,22 @@ namespace EnLaunch
                 {
                     UsernameTextBox.Text = microsoftSession.Username;
                 }
-            } catch
+            }
+            catch
             {
                 MessageDialog messageDialog = new("Error", "There was an error while signing into your microsoft account.");
                 messageDialog.ShowDialog();
             }
             ToggleFunctionality(true);
+        }
+
+        private void MemoryTrackBar_ValueChanged(object sender, EventArgs e)
+        {
+            int availableMemory = GetAvailableMemory();
+
+            MemoryTrackBar.Maximum = availableMemory;
+
+            MemoryLabel.Text = "Runtime Memory: " + MemoryTrackBar.Value + " / " + availableMemory + " GB";
         }
     }
 }

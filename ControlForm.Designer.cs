@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ControlForm));
             TableLayoutPanel = new TableLayoutPanel();
             UsernameTableLayoutPanel = new TableLayoutPanel();
             UsernameLabel = new Label();
@@ -45,6 +46,8 @@
             PlayControlsTableLayoutPanel = new TableLayoutPanel();
             PlayButton = new Button();
             RefreshButton = new Button();
+            MemoryLabel = new Label();
+            MemoryTrackBar = new TrackBar();
             RootTableLayoutPanel = new TableLayoutPanel();
             ProgressTrackerTableLayoutPanel = new TableLayoutPanel();
             StatusLabel = new Label();
@@ -55,6 +58,7 @@
             DownloadControlsTableLayoutPanel.SuspendLayout();
             PlayTableLayoutPanel.SuspendLayout();
             PlayControlsTableLayoutPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)MemoryTrackBar).BeginInit();
             RootTableLayoutPanel.SuspendLayout();
             ProgressTrackerTableLayoutPanel.SuspendLayout();
             SuspendLayout();
@@ -73,10 +77,10 @@
             TableLayoutPanel.Controls.Add(PlayTableLayoutPanel, 2, 1);
             TableLayoutPanel.Location = new Point(3, 3);
             TableLayoutPanel.Name = "TableLayoutPanel";
-            TableLayoutPanel.RowCount = 3;
-            TableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            TableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333359F));
-            TableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333359F));
+            TableLayoutPanel.RowCount = 2;
+            TableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3355522F));
+            TableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 66.66445F));
+            TableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             TableLayoutPanel.Size = new Size(794, 418);
             TableLayoutPanel.TabIndex = 0;
             // 
@@ -94,7 +98,7 @@
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            UsernameTableLayoutPanel.Size = new Size(192, 133);
+            UsernameTableLayoutPanel.Size = new Size(192, 273);
             UsernameTableLayoutPanel.TabIndex = 0;
             // 
             // UsernameLabel
@@ -140,7 +144,7 @@
             DownloadTableLayoutPanel.RowStyles.Add(new RowStyle());
             DownloadTableLayoutPanel.RowStyles.Add(new RowStyle());
             DownloadTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            DownloadTableLayoutPanel.Size = new Size(192, 133);
+            DownloadTableLayoutPanel.Size = new Size(192, 273);
             DownloadTableLayoutPanel.TabIndex = 1;
             // 
             // DownloadLabel
@@ -174,7 +178,7 @@
             DownloadControlsTableLayoutPanel.RowCount = 1;
             DownloadControlsTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             DownloadControlsTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            DownloadControlsTableLayoutPanel.Size = new Size(186, 83);
+            DownloadControlsTableLayoutPanel.Size = new Size(186, 223);
             DownloadControlsTableLayoutPanel.TabIndex = 2;
             // 
             // DownloadButton
@@ -207,13 +211,18 @@
             PlayTableLayoutPanel.Controls.Add(PlayLabel, 0, 0);
             PlayTableLayoutPanel.Controls.Add(PlayVersionComboBox, 0, 1);
             PlayTableLayoutPanel.Controls.Add(PlayControlsTableLayoutPanel, 0, 2);
+            PlayTableLayoutPanel.Controls.Add(MemoryLabel, 0, 3);
+            PlayTableLayoutPanel.Controls.Add(MemoryTrackBar, 0, 4);
             PlayTableLayoutPanel.Location = new Point(300, 142);
+            PlayTableLayoutPanel.MinimumSize = new Size(0, 150);
             PlayTableLayoutPanel.Name = "PlayTableLayoutPanel";
-            PlayTableLayoutPanel.RowCount = 3;
+            PlayTableLayoutPanel.RowCount = 5;
+            PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
+            PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            PlayTableLayoutPanel.Size = new Size(192, 133);
+            PlayTableLayoutPanel.Size = new Size(192, 273);
             PlayTableLayoutPanel.TabIndex = 2;
             // 
             // PlayLabel
@@ -248,7 +257,7 @@
             PlayControlsTableLayoutPanel.RowCount = 1;
             PlayControlsTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             PlayControlsTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            PlayControlsTableLayoutPanel.Size = new Size(186, 83);
+            PlayControlsTableLayoutPanel.Size = new Size(186, 43);
             PlayControlsTableLayoutPanel.TabIndex = 2;
             // 
             // PlayButton
@@ -272,6 +281,27 @@
             RefreshButton.Text = "Refresh";
             RefreshButton.UseVisualStyleBackColor = true;
             RefreshButton.Click += RefreshButton_Click;
+            // 
+            // MemoryLabel
+            // 
+            MemoryLabel.AutoSize = true;
+            MemoryLabel.Location = new Point(3, 93);
+            MemoryLabel.Name = "MemoryLabel";
+            MemoryLabel.Size = new Size(106, 15);
+            MemoryLabel.TabIndex = 3;
+            MemoryLabel.Text = "Runtime Memory: ";
+            // 
+            // MemoryTrackBar
+            // 
+            MemoryTrackBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            MemoryTrackBar.Location = new Point(3, 111);
+            MemoryTrackBar.Maximum = 1;
+            MemoryTrackBar.Minimum = 1;
+            MemoryTrackBar.Name = "MemoryTrackBar";
+            MemoryTrackBar.Size = new Size(186, 45);
+            MemoryTrackBar.TabIndex = 4;
+            MemoryTrackBar.Value = 1;
+            MemoryTrackBar.ValueChanged += MemoryTrackBar_ValueChanged;
             // 
             // RootTableLayoutPanel
             // 
@@ -326,6 +356,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
             Controls.Add(RootTableLayoutPanel);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "ControlForm";
             Text = "EnLaunch";
             TableLayoutPanel.ResumeLayout(false);
@@ -337,6 +368,7 @@
             PlayTableLayoutPanel.ResumeLayout(false);
             PlayTableLayoutPanel.PerformLayout();
             PlayControlsTableLayoutPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)MemoryTrackBar).EndInit();
             RootTableLayoutPanel.ResumeLayout(false);
             ProgressTrackerTableLayoutPanel.ResumeLayout(false);
             ProgressTrackerTableLayoutPanel.PerformLayout();
@@ -366,5 +398,7 @@
         private Button DownloadButton;
         private Button RefreshDownloadsButton;
         private Button MicrosoftLoginButton;
+        private Label MemoryLabel;
+        private TrackBar MemoryTrackBar;
     }
 }
