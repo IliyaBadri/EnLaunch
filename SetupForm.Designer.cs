@@ -98,7 +98,7 @@
             BrowseButton.Name = "BrowseButton";
             BrowseButton.Size = new Size(75, 23);
             BrowseButton.TabIndex = 1;
-            BrowseButton.Text = "browse";
+            BrowseButton.Text = "Browse";
             BrowseButton.UseVisualStyleBackColor = true;
             BrowseButton.Click += BrowseButton_Click;
             // 
@@ -109,7 +109,7 @@
             ContinueButton.Name = "ContinueButton";
             ContinueButton.Size = new Size(500, 23);
             ContinueButton.TabIndex = 2;
-            ContinueButton.Text = "continue";
+            ContinueButton.Text = "Continue";
             ContinueButton.UseVisualStyleBackColor = true;
             ContinueButton.Click += ContinueButton_Click;
             // 

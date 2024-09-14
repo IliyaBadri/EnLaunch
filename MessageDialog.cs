@@ -24,5 +24,10 @@ namespace EnLaunch
         {
             this.Close();
         }
+
+        private void TextLabel_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

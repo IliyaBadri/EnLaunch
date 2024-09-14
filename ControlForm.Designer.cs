@@ -91,13 +91,15 @@
             UsernameTableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             UsernameTableLayoutPanel.Controls.Add(UsernameLabel, 0, 0);
             UsernameTableLayoutPanel.Controls.Add(UsernameTextBox, 0, 1);
-            UsernameTableLayoutPanel.Controls.Add(MicrosoftLoginButton, 0, 2);
+            UsernameTableLayoutPanel.Controls.Add(MicrosoftLoginButton, 0, 4);
             UsernameTableLayoutPanel.Location = new Point(102, 142);
             UsernameTableLayoutPanel.Name = "UsernameTableLayoutPanel";
-            UsernameTableLayoutPanel.RowCount = 3;
+            UsernameTableLayoutPanel.RowCount = 5;
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
-            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 44.4444427F));
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 22.2222176F));
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
             UsernameTableLayoutPanel.Size = new Size(192, 273);
             UsernameTableLayoutPanel.TabIndex = 0;
             // 
@@ -106,9 +108,9 @@
             UsernameLabel.AutoSize = true;
             UsernameLabel.Location = new Point(3, 0);
             UsernameLabel.Name = "UsernameLabel";
-            UsernameLabel.Size = new Size(63, 15);
+            UsernameLabel.Size = new Size(101, 15);
             UsernameLabel.TabIndex = 0;
-            UsernameLabel.Text = "Username:";
+            UsernameLabel.Text = "Offline username:";
             // 
             // UsernameTextBox
             // 
@@ -122,7 +124,7 @@
             // MicrosoftLoginButton
             // 
             MicrosoftLoginButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            MicrosoftLoginButton.Location = new Point(3, 47);
+            MicrosoftLoginButton.Location = new Point(3, 198);
             MicrosoftLoginButton.Name = "MicrosoftLoginButton";
             MicrosoftLoginButton.Size = new Size(186, 32);
             MicrosoftLoginButton.TabIndex = 2;

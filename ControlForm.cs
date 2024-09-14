@@ -17,32 +17,23 @@ using CmlLib.Core.Version;
 using CmlLib.Core.VersionLoader;
 using CmlLib.Core.VersionMetadata;
 using Microsoft.VisualBasic.Devices;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace EnLaunch
 {
     public partial class ControlForm : Form
     {
-        private void ToggleFunctionality(bool enabled)
+        private enum LauncherState
         {
-            DownloadButton.Enabled = enabled;
-            PlayButton.Enabled = enabled;
-            RefreshButton.Enabled = enabled;
-            RefreshDownloadsButton.Enabled = enabled;
-            MicrosoftLoginButton.Enabled = enabled;
-            MemoryTrackBar.Enabled = enabled;
+            Idle,
+            RefreshingDownloads,
+            Downloading,
+            Refreshing,
+            LoadingMinecraft,
+            SigningIn
         }
 
-        private void ChangeStatus(DownloadFileChangedEventArgs eventArgs)
-        {
-            string status = "[" + ProgressBar.Value.ToString() + "%] (" + eventArgs.ProgressedFileCount.ToString() + "/" + eventArgs.TotalFileCount.ToString() + "): " + eventArgs.FileName;
-            StatusLabel.Text = status;
-        }
-
-        private void ChangeProgress(object? sender, ProgressChangedEventArgs eventArgs)
-        {
-            ProgressBar.Value = eventArgs.ProgressPercentage;
-        }
-
+        private LauncherState launcherState = LauncherState.Idle;
         private readonly CMLauncher globalLauncher;
         private readonly MinecraftPath minecraftPath;
         private MSession? microsoftSession;
@@ -62,47 +53,10 @@ namespace EnLaunch
             MemoryTrackBar_ValueChanged(this, new EventArgs());
         }
 
-        private int GetAvailableMemory()
-        {
-
-            ComputerInfo computerInfo = new ComputerInfo();
-            ulong availableMemoryBytes = computerInfo.TotalPhysicalMemory;
-            float availableMemoryGB = availableMemoryBytes / (1024f * 1024f * 1024f);
-            return (int)availableMemoryGB;
-        }
-
-        private async void DownloadButton_Click(object sender, EventArgs e)
-        {
-            if (DownloadsComboBox.SelectedItem == null)
-            {
-                return;
-            }
-
-            string? versionString = DownloadsComboBox.SelectedItem.ToString();
-
-            if (versionString == null)
-            {
-                return;
-            }
-
-            ToggleFunctionality(false);
-            try
-            {
-                MVersion version = await globalLauncher.GetVersionAsync(versionString);
-                await globalLauncher.CheckAndDownloadAsync(version);
-            }
-            catch
-            { }
-
-            ToggleFunctionality(true);
-            StatusLabel.Text = "Halt";
-        }
-
         private async void RefreshDownloadsButton_Click(object sender, EventArgs e)
         {
-            ToggleFunctionality(false);
-
-            StatusLabel.Text = "Fetching versions manifest from server . . .";
+            launcherState = LauncherState.RefreshingDownloads;
+            UpdateBasedOnLauncherState();
             try
             {
                 MVersionCollection versions = await globalLauncher.GetAllVersionsAsync();
@@ -120,15 +74,46 @@ namespace EnLaunch
                 MessageDialog messageDialog = new("Error", "Couldn't get downloadable minecraft versions from server.");
                 messageDialog.ShowDialog();
             }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+            }
+        }
 
-            StatusLabel.Text = "Halt";
-            ToggleFunctionality(true);
+        private async void DownloadButton_Click(object sender, EventArgs e)
+        {
+            if (DownloadsComboBox.SelectedItem == null)
+            {
+                return;
+            }
+
+            string? versionString = DownloadsComboBox.SelectedItem.ToString();
+
+            if (versionString == null)
+            {
+                return;
+            }
+            launcherState = LauncherState.Downloading;
+            UpdateBasedOnLauncherState();
+            try
+            {
+                MVersion version = await globalLauncher.GetVersionAsync(versionString);
+                await globalLauncher.CheckAndDownloadAsync(version);
+            }
+            catch
+            { }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+            }
         }
 
         private async void RefreshButton_Click(object sender, EventArgs e)
         {
-            ToggleFunctionality(false);
-            StatusLabel.Text = "Fetching versions from the game path . . .";
+            launcherState = LauncherState.Refreshing;
+            UpdateBasedOnLauncherState();
             try
             {
                 CMLauncher launcher = new(minecraftPath);
@@ -150,11 +135,11 @@ namespace EnLaunch
             {
                 MessageDialog messageDialog = new("Error", "There was an error while trying to load the local minecraft versions.");
                 messageDialog.ShowDialog();
+            } finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
             }
-
-
-            StatusLabel.Text = "Halt";
-            ToggleFunctionality(true);
         }
 
         private async void PlayButton_Click(object sender, EventArgs e)
@@ -171,9 +156,10 @@ namespace EnLaunch
                 return;
             }
 
+            launcherState = LauncherState.LoadingMinecraft;
+            UpdateBasedOnLauncherState();
             try
             {
-
                 MSession session;
 
                 if (microsoftSession == null)
@@ -186,12 +172,32 @@ namespace EnLaunch
                 }
 
                 int selectedMemoryAmountMB = MemoryTrackBar.Value * 1024;
-                MLaunchOption launchOptions = new()
+                MLaunchOption launchOptions;
+                if(microsoftSession == null)
                 {
-                    Session = session,
-                    MinimumRamMb = 1024,
-                    MaximumRamMb = selectedMemoryAmountMB
-                };
+                    launchOptions = new()
+                    {
+                        Session = session,
+                        MinimumRamMb = 1024,
+                        MaximumRamMb = selectedMemoryAmountMB,
+                        JVMArguments = [
+                            "-Dminecraft.api.env=custom",
+                            "-Dminecraft.api.auth.host=https://invalid.invalid",
+                            "-Dminecraft.api.account.host=https://invalid.invalid",
+                            "-Dminecraft.api.session.host=https://invalid.invalid", 
+                            "-Dminecraft.api.services.host=https://invalid.invalid"]
+                    };
+                } else
+                {
+                    launchOptions = new()
+                    {
+                        Session = session,
+                        MinimumRamMb = 1024,
+                        MaximumRamMb = selectedMemoryAmountMB
+                    };
+                }
+                
+
                 var process = await globalLauncher.CreateProcessAsync(versionString, launchOptions, checkAndDownload: false);
                 process.Start();
             }
@@ -199,19 +205,22 @@ namespace EnLaunch
             {
                 MessageDialog messageDialog = new("Error", "There was an error while starting the game process.");
                 messageDialog.ShowDialog();
+            } finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
             }
         }
 
         private async void MicrosoftLoginButton_Click(object sender, EventArgs e)
         {
-            ToggleFunctionality(false);
+            launcherState = LauncherState.SigningIn;
+            UpdateBasedOnLauncherState();
             try
             {
                 JELoginHandler loginHandler = JELoginHandlerBuilder.BuildDefault();
                 microsoftSession = await loginHandler.Authenticate();
-
                 UsernameTextBox.ReadOnly = true;
-
                 if (microsoftSession.Username != null)
                 {
                     UsernameTextBox.Text = microsoftSession.Username;
@@ -221,8 +230,11 @@ namespace EnLaunch
             {
                 MessageDialog messageDialog = new("Error", "There was an error while signing into your microsoft account.");
                 messageDialog.ShowDialog();
+            } finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
             }
-            ToggleFunctionality(true);
         }
 
         private void MemoryTrackBar_ValueChanged(object sender, EventArgs e)
@@ -232,6 +244,97 @@ namespace EnLaunch
             MemoryTrackBar.Maximum = availableMemory;
 
             MemoryLabel.Text = "Runtime Memory: " + MemoryTrackBar.Value + " / " + availableMemory + " GB";
+        }
+
+        private int GetAvailableMemory()
+        {
+            ComputerInfo computerInfo = new ComputerInfo();
+            ulong availableMemoryBytes = computerInfo.TotalPhysicalMemory;
+            float availableMemoryGB = availableMemoryBytes / (1024f * 1024f * 1024f);
+            return (int)availableMemoryGB;
+        }
+
+        private void UpdateBasedOnLauncherState()
+        {
+            switch (launcherState)
+            {
+                case LauncherState.Idle:
+                    ToggleFunctionality(true);
+                    StatusLabel.Text = "Halt";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.RefreshingDownloads:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Fetching versions manifest from server . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.Downloading:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Downloading . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.Refreshing:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Searching for local versions . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.LoadingMinecraft:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Loading version . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.SigningIn:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Signing you in . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+
+            }
+        }
+
+        private void ToggleFunctionality(bool enabled)
+        {
+            DownloadButton.Enabled = enabled;
+            PlayButton.Enabled = enabled;
+            RefreshButton.Enabled = enabled;
+            RefreshDownloadsButton.Enabled = enabled;
+            MicrosoftLoginButton.Enabled = enabled;
+            MemoryTrackBar.Enabled = enabled;
+        }
+
+        private void ChangeStatus(DownloadFileChangedEventArgs eventArgs)
+        {
+            string downloadState = "Processing";
+
+            switch (eventArgs.FileType)
+            {
+                case MFile.Library:
+                    downloadState = "Downloading libraries";
+                    break;
+                case MFile.Resource:
+                    downloadState = "Downloading resources";
+                    break;
+                case MFile.Minecraft:
+                    downloadState = "Downloading minecraft";
+                    break;
+                case MFile.Runtime:
+                    downloadState = "Downloading java";
+                    break;
+            }
+
+            string status = downloadState + " [" + ProgressBar.Value.ToString() + "%] (" + eventArgs.ProgressedFileCount.ToString() + "/" + eventArgs.TotalFileCount.ToString() + "): " + eventArgs.FileName;
+            StatusLabel.Text = status;
+        }
+
+        private void ChangeProgress(object? sender, ProgressChangedEventArgs eventArgs)
+        {
+            ProgressBar.Value = eventArgs.ProgressPercentage;
         }
     }
 }
