@@ -12,40 +12,36 @@ using System.Windows.Forms;
 using CmlLib.Core;
 using CmlLib.Core.Auth;
 using CmlLib.Core.Auth.Microsoft;
+using CmlLib.Core.Auth.Microsoft.Sessions;
 using CmlLib.Core.Downloader;
 using CmlLib.Core.Version;
 using CmlLib.Core.VersionLoader;
 using CmlLib.Core.VersionMetadata;
 using Microsoft.VisualBasic.Devices;
+using XboxAuthNet.Game.Accounts;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace EnLaunch
 {
     public partial class ControlForm : Form
     {
-        private void ToggleFunctionality(bool enabled)
+        private enum LauncherState
         {
-            DownloadButton.Enabled = enabled;
-            PlayButton.Enabled = enabled;
-            RefreshButton.Enabled = enabled;
-            RefreshDownloadsButton.Enabled = enabled;
-            MicrosoftLoginButton.Enabled = enabled;
-            MemoryTrackBar.Enabled = enabled;
+            Idle,
+            RefreshingDownloads,
+            Downloading,
+            Refreshing,
+            LoadingMinecraft,
+            SigningIn,
+            LoadingAccounts,
+            SigningOut
         }
 
-        private void ChangeStatus(DownloadFileChangedEventArgs eventArgs)
-        {
-            string status = "[" + ProgressBar.Value.ToString() + "%] (" + eventArgs.ProgressedFileCount.ToString() + "/" + eventArgs.TotalFileCount.ToString() + "): " + eventArgs.FileName;
-            StatusLabel.Text = status;
-        }
-
-        private void ChangeProgress(object? sender, ProgressChangedEventArgs eventArgs)
-        {
-            ProgressBar.Value = eventArgs.ProgressPercentage;
-        }
-
+        private bool onlineAccountMode = false;
+        private LauncherState launcherState = LauncherState.Idle;
         private readonly CMLauncher globalLauncher;
         private readonly MinecraftPath minecraftPath;
-        private MSession? microsoftSession;
+        private JELoginHandler loginHandler;
 
         public ControlForm(string launcherPath)
         {
@@ -59,50 +55,31 @@ namespace EnLaunch
 
             globalLauncher.ProgressChanged += ChangeProgress;
 
+            loginHandler = JELoginHandlerBuilder.BuildDefault();
+
             MemoryTrackBar_ValueChanged(this, new EventArgs());
-        }
 
-        private int GetAvailableMemory()
-        {
+            SelectSavedRamAmount();
 
-            ComputerInfo computerInfo = new ComputerInfo();
-            ulong availableMemoryBytes = computerInfo.TotalPhysicalMemory;
-            float availableMemoryGB = availableMemoryBytes / (1024f * 1024f * 1024f);
-            return (int)availableMemoryGB;
-        }
+            UpdateAccountSettings();
 
-        private async void DownloadButton_Click(object sender, EventArgs e)
-        {
-            if (DownloadsComboBox.SelectedItem == null)
-            {
-                return;
-            }
+            RefreshButton_Click(this, new EventArgs());
 
-            string? versionString = DownloadsComboBox.SelectedItem.ToString();
-
-            if (versionString == null)
-            {
-                return;
-            }
-
-            ToggleFunctionality(false);
             try
             {
-                MVersion version = await globalLauncher.GetVersionAsync(versionString);
-                await globalLauncher.CheckAndDownloadAsync(version);
-            }
-            catch
-            { }
+                string launcherProfilePath = Path.Combine(launcherPath, "launcher_profiles.json");
 
-            ToggleFunctionality(true);
-            StatusLabel.Text = "Halt";
+                File.WriteAllText(launcherProfilePath, "{\"profiles\":{ } }");
+            } catch
+            {
+
+            }
         }
 
         private async void RefreshDownloadsButton_Click(object sender, EventArgs e)
         {
-            ToggleFunctionality(false);
-
-            StatusLabel.Text = "Fetching versions manifest from server . . .";
+            launcherState = LauncherState.RefreshingDownloads;
+            UpdateBasedOnLauncherState();
             try
             {
                 MVersionCollection versions = await globalLauncher.GetAllVersionsAsync();
@@ -120,15 +97,47 @@ namespace EnLaunch
                 MessageDialog messageDialog = new("Error", "Couldn't get downloadable minecraft versions from server.");
                 messageDialog.ShowDialog();
             }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+            }
+        }
 
-            StatusLabel.Text = "Halt";
-            ToggleFunctionality(true);
+        private async void DownloadButton_Click(object sender, EventArgs e)
+        {
+            if (DownloadsComboBox.SelectedItem == null)
+            {
+                return;
+            }
+
+            string? versionString = DownloadsComboBox.SelectedItem.ToString();
+
+            if (versionString == null)
+            {
+                return;
+            }
+            launcherState = LauncherState.Downloading;
+            UpdateBasedOnLauncherState();
+            try
+            {
+                MVersion version = await globalLauncher.GetVersionAsync(versionString);
+                await globalLauncher.CheckAndDownloadAsync(version);
+            }
+            catch
+            { }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+                RefreshButton_Click(this, new EventArgs());
+            }
         }
 
         private async void RefreshButton_Click(object sender, EventArgs e)
         {
-            ToggleFunctionality(false);
-            StatusLabel.Text = "Fetching versions from the game path . . .";
+            launcherState = LauncherState.Refreshing;
+            UpdateBasedOnLauncherState();
             try
             {
                 CMLauncher launcher = new(minecraftPath);
@@ -151,14 +160,19 @@ namespace EnLaunch
                 MessageDialog messageDialog = new("Error", "There was an error while trying to load the local minecraft versions.");
                 messageDialog.ShowDialog();
             }
-
-
-            StatusLabel.Text = "Halt";
-            ToggleFunctionality(true);
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+            }
         }
 
         private async void PlayButton_Click(object sender, EventArgs e)
         {
+            Properties.Settings.Default.OfflineUsername = OfflineUsernameTextBox.Text;
+            Properties.Settings.Default.PreviousRamAmount = MemoryTrackBar.Value;
+            Properties.Settings.Default.Save();
+
             if (PlayVersionComboBox.SelectedItem == null)
             {
                 return;
@@ -171,28 +185,73 @@ namespace EnLaunch
                 return;
             }
 
+            launcherState = LauncherState.LoadingMinecraft;
+            UpdateBasedOnLauncherState();
+
+            string? onlineAccountUsernameString = null;
+
+            if (
+                AccountsComboBox.SelectedItem == null &&
+                onlineAccountMode
+                )
+            {
+                MessageDialog messageDialog = new("Error", "You must select a valid online account first.");
+                messageDialog.ShowDialog();
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+                return;
+            }
+            else if (AccountsComboBox.SelectedItem != null && onlineAccountMode)
+            {
+                onlineAccountUsernameString = AccountsComboBox.SelectedItem.ToString();
+            }
+
             try
             {
-
-                MSession session;
-
-                if (microsoftSession == null)
+                int selectedMemoryAmountMB = MemoryTrackBar.Value * 1024;
+                MLaunchOption launchOptions;
+                if (
+                    onlineAccountMode &&
+                    onlineAccountUsernameString != null
+                    )
                 {
-                    session = MSession.CreateOfflineSession(UsernameTextBox.Text);
+                    XboxGameAccountCollection accounts = loginHandler.AccountManager.GetAccounts();
+                    JEGameAccount account = accounts.GetJEAccountByUsername(onlineAccountUsernameString);
+                    MSession session = await loginHandler.Authenticate(account);
+                    launchOptions = new()
+                    {
+                        Session = session,
+                        MinimumRamMb = 1024,
+                        MaximumRamMb = selectedMemoryAmountMB
+                    };
+                }
+                else if (onlineAccountMode)
+                {
+                    MessageDialog messageDialog = new("Error", "You must select a valid online account first.");
+                    messageDialog.ShowDialog();
+                    launcherState = LauncherState.Idle;
+                    UpdateBasedOnLauncherState();
+                    return;
                 }
                 else
                 {
-                    session = microsoftSession;
+                    MSession session = MSession.CreateOfflineSession(OfflineUsernameTextBox.Text);
+                    launchOptions = new()
+                    {
+                        Session = session,
+                        MinimumRamMb = 1024,
+                        MaximumRamMb = selectedMemoryAmountMB,
+                        JVMArguments = [
+                            "-Dminecraft.api.env=custom",
+                            "-Dminecraft.api.auth.host=https://invalid.invalid",
+                            "-Dminecraft.api.account.host=https://invalid.invalid",
+                            "-Dminecraft.api.session.host=https://invalid.invalid",
+                            "-Dminecraft.api.services.host=https://invalid.invalid"
+                            ]
+                    };
                 }
 
-                int selectedMemoryAmountMB = MemoryTrackBar.Value * 1024;
-                MLaunchOption launchOptions = new()
-                {
-                    Session = session,
-                    MinimumRamMb = 1024,
-                    MaximumRamMb = selectedMemoryAmountMB
-                };
-                var process = await globalLauncher.CreateProcessAsync(versionString, launchOptions, checkAndDownload: false);
+                var process = await globalLauncher.CreateProcessAsync(versionString, launchOptions, checkAndDownload: UpdateCheckBox.Checked);
                 process.Start();
             }
             catch
@@ -200,29 +259,89 @@ namespace EnLaunch
                 MessageDialog messageDialog = new("Error", "There was an error while starting the game process.");
                 messageDialog.ShowDialog();
             }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+            }
         }
 
         private async void MicrosoftLoginButton_Click(object sender, EventArgs e)
         {
-            ToggleFunctionality(false);
+            launcherState = LauncherState.SigningIn;
+            UpdateBasedOnLauncherState();
             try
             {
-                JELoginHandler loginHandler = JELoginHandlerBuilder.BuildDefault();
-                microsoftSession = await loginHandler.Authenticate();
-
-                UsernameTextBox.ReadOnly = true;
-
-                if (microsoftSession.Username != null)
-                {
-                    UsernameTextBox.Text = microsoftSession.Username;
-                }
+                await loginHandler.AuthenticateInteractively();
             }
             catch
             {
                 MessageDialog messageDialog = new("Error", "There was an error while signing into your microsoft account.");
                 messageDialog.ShowDialog();
             }
-            ToggleFunctionality(true);
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+                UpdateOnlineAccounts();
+            }
+        }
+
+        private void ChangeAccountModeButton_Click(object sender, EventArgs e)
+        {
+            onlineAccountMode = !onlineAccountMode;
+            UpdateAccountSettings();
+        }
+
+        private async void SignoutButton_Click(object sender, EventArgs e)
+        {
+            if (!onlineAccountMode)
+            {
+                return;
+            }
+
+            launcherState = LauncherState.SigningOut;
+            UpdateBasedOnLauncherState();
+
+            string? onlineAccountUsernameString = null;
+
+            if (AccountsComboBox.SelectedItem == null)
+            {
+                MessageDialog messageDialog = new("Error", "You must select a valid online account first.");
+                messageDialog.ShowDialog();
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+                return;
+            }
+
+            onlineAccountUsernameString = AccountsComboBox.SelectedItem.ToString();
+
+            if (onlineAccountUsernameString == null)
+            {
+                MessageDialog messageDialog = new("Error", "You must select a valid online account first.");
+                messageDialog.ShowDialog();
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+                return;
+            }
+
+            try
+            {
+                XboxGameAccountCollection accounts = loginHandler.AccountManager.GetAccounts();
+                JEGameAccount account = accounts.GetJEAccountByUsername(onlineAccountUsernameString);
+                await loginHandler.SignoutWithBrowser(account);
+            }
+            catch
+            {
+                MessageDialog messageDialog = new("Error", "There was an error while signing you out.");
+                messageDialog.ShowDialog();
+            }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+                UpdateOnlineAccounts();
+            }
         }
 
         private void MemoryTrackBar_ValueChanged(object sender, EventArgs e)
@@ -232,6 +351,183 @@ namespace EnLaunch
             MemoryTrackBar.Maximum = availableMemory;
 
             MemoryLabel.Text = "Runtime Memory: " + MemoryTrackBar.Value + " / " + availableMemory + " GB";
+        }
+
+        private int GetAvailableMemory()
+        {
+            ComputerInfo computerInfo = new ComputerInfo();
+            ulong availableMemoryBytes = computerInfo.TotalPhysicalMemory;
+            float availableMemoryGB = availableMemoryBytes / (1024f * 1024f * 1024f);
+            return (int)availableMemoryGB;
+        }
+
+        private void UpdateBasedOnLauncherState()
+        {
+            switch (launcherState)
+            {
+                case LauncherState.Idle:
+                    ToggleFunctionality(true);
+                    StatusLabel.Text = "Halt";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.RefreshingDownloads:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Fetching versions manifest from server . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.Downloading:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Downloading . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.Refreshing:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Searching for local versions . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.LoadingMinecraft:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Loading version . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.SigningIn:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Signing you in . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.LoadingAccounts:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Loading accounts . . .";
+                    ProgressBar.Value = 0;
+                    break;
+
+                case LauncherState.SigningOut:
+                    ToggleFunctionality(false);
+                    StatusLabel.Text = "Signing out of your account . . .";
+                    ProgressBar.Value = 0;
+                    break;
+            }
+        }
+
+        private void ToggleFunctionality(bool enabled)
+        {
+            DownloadButton.Enabled = enabled;
+            PlayButton.Enabled = enabled;
+            RefreshButton.Enabled = enabled;
+            RefreshDownloadsButton.Enabled = enabled;
+            MicrosoftLoginButton.Enabled = enabled;
+            MemoryTrackBar.Enabled = enabled;
+            ChangeAccountModeButton.Enabled = enabled;
+            SignoutButton.Enabled = enabled;
+        }
+
+        private void ChangeStatus(DownloadFileChangedEventArgs eventArgs)
+        {
+            string downloadState = "Processing";
+
+            switch (eventArgs.FileType)
+            {
+                case MFile.Library:
+                    downloadState = "Downloading libraries";
+                    break;
+                case MFile.Resource:
+                    downloadState = "Downloading resources";
+                    break;
+                case MFile.Minecraft:
+                    downloadState = "Downloading minecraft";
+                    break;
+                case MFile.Runtime:
+                    downloadState = "Downloading java";
+                    break;
+            }
+
+            string status = downloadState + " [" + ProgressBar.Value.ToString() + "%] (" + eventArgs.ProgressedFileCount.ToString() + "/" + eventArgs.TotalFileCount.ToString() + "): " + eventArgs.FileName;
+            StatusLabel.Text = status;
+        }
+
+        private void ChangeProgress(object? sender, ProgressChangedEventArgs eventArgs)
+        {
+            ProgressBar.Value = eventArgs.ProgressPercentage;
+        }
+
+        private void UpdateOnlineAccounts()
+        {
+            launcherState = LauncherState.LoadingAccounts;
+            UpdateBasedOnLauncherState();
+            try
+            {
+                XboxGameAccountCollection accounts = loginHandler.AccountManager.GetAccounts();
+                List<string> accountUsernames = [];
+                foreach (XboxGameAccount account in accounts)
+                {
+                    if (account is not JEGameAccount jeAccount)
+                    {
+                        continue;
+                    }
+
+                    if (
+                        jeAccount.Profile == null ||
+                        jeAccount.Profile.Username == null
+                        )
+                    {
+                        continue;
+                    }
+
+                    accountUsernames.Add(jeAccount.Profile.Username);
+                }
+                AccountsComboBox.DataSource = accountUsernames;
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+                launcherState = LauncherState.Idle;
+                UpdateBasedOnLauncherState();
+            }
+        }
+
+        private void UpdateAccountSettings()
+        {
+            if (onlineAccountMode)
+            {
+                ChangeAccountModeButton.Text = "Switch to offline mode";
+                OfflineUsernameLabel.Visible = false;
+                OfflineUsernameTextBox.Visible = false;
+                AccountsComboBox.Visible = true;
+                OnlineAccountsLabel.Visible = true;
+                MicrosoftLoginButton.Visible = true;
+                SignoutButton.Visible = true;
+                UpdateOnlineAccounts();
+            }
+            else
+            {
+                ChangeAccountModeButton.Text = "Switch to online mode";
+                OfflineUsernameTextBox.Text = Properties.Settings.Default.OfflineUsername;
+                OfflineUsernameLabel.Visible = true;
+                OfflineUsernameTextBox.Visible = true;
+                AccountsComboBox.Visible = false;
+                OnlineAccountsLabel.Visible = false;
+                MicrosoftLoginButton.Visible = false;
+                SignoutButton.Visible = false;
+            }
+        }
+
+        private void SelectSavedRamAmount()
+        {
+            int previousMemoryAmount = Properties.Settings.Default.PreviousRamAmount;
+
+            if (previousMemoryAmount >= MemoryTrackBar.Minimum && previousMemoryAmount <= MemoryTrackBar.Maximum)
+            {
+                MemoryTrackBar.Value = previousMemoryAmount;
+            }
         }
     }
 }

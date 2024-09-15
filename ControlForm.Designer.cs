@@ -31,8 +31,12 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ControlForm));
             TableLayoutPanel = new TableLayoutPanel();
             UsernameTableLayoutPanel = new TableLayoutPanel();
-            UsernameLabel = new Label();
-            UsernameTextBox = new TextBox();
+            SignoutButton = new Button();
+            OfflineUsernameLabel = new Label();
+            OfflineUsernameTextBox = new TextBox();
+            OnlineAccountsLabel = new Label();
+            AccountsComboBox = new ComboBox();
+            ChangeAccountModeButton = new Button();
             MicrosoftLoginButton = new Button();
             DownloadTableLayoutPanel = new TableLayoutPanel();
             DownloadLabel = new Label();
@@ -46,8 +50,9 @@
             PlayControlsTableLayoutPanel = new TableLayoutPanel();
             PlayButton = new Button();
             RefreshButton = new Button();
-            MemoryLabel = new Label();
             MemoryTrackBar = new TrackBar();
+            MemoryLabel = new Label();
+            UpdateCheckBox = new CheckBox();
             RootTableLayoutPanel = new TableLayoutPanel();
             ProgressTrackerTableLayoutPanel = new TableLayoutPanel();
             StatusLabel = new Label();
@@ -89,44 +94,95 @@
             UsernameTableLayoutPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             UsernameTableLayoutPanel.ColumnCount = 1;
             UsernameTableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            UsernameTableLayoutPanel.Controls.Add(UsernameLabel, 0, 0);
-            UsernameTableLayoutPanel.Controls.Add(UsernameTextBox, 0, 1);
-            UsernameTableLayoutPanel.Controls.Add(MicrosoftLoginButton, 0, 2);
+            UsernameTableLayoutPanel.Controls.Add(SignoutButton, 0, 4);
+            UsernameTableLayoutPanel.Controls.Add(OfflineUsernameLabel, 0, 0);
+            UsernameTableLayoutPanel.Controls.Add(OfflineUsernameTextBox, 0, 1);
+            UsernameTableLayoutPanel.Controls.Add(OnlineAccountsLabel, 0, 2);
+            UsernameTableLayoutPanel.Controls.Add(AccountsComboBox, 0, 3);
+            UsernameTableLayoutPanel.Controls.Add(ChangeAccountModeButton, 0, 6);
+            UsernameTableLayoutPanel.Controls.Add(MicrosoftLoginButton, 0, 5);
             UsernameTableLayoutPanel.Location = new Point(102, 142);
             UsernameTableLayoutPanel.Name = "UsernameTableLayoutPanel";
-            UsernameTableLayoutPanel.RowCount = 3;
+            UsernameTableLayoutPanel.RowCount = 7;
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
+            UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle());
             UsernameTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             UsernameTableLayoutPanel.Size = new Size(192, 273);
             UsernameTableLayoutPanel.TabIndex = 0;
             // 
-            // UsernameLabel
+            // SignoutButton
             // 
-            UsernameLabel.AutoSize = true;
-            UsernameLabel.Location = new Point(3, 0);
-            UsernameLabel.Name = "UsernameLabel";
-            UsernameLabel.Size = new Size(63, 15);
-            UsernameLabel.TabIndex = 0;
-            UsernameLabel.Text = "Username:";
+            SignoutButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            SignoutButton.Location = new Point(3, 91);
+            SignoutButton.Name = "SignoutButton";
+            SignoutButton.Size = new Size(186, 32);
+            SignoutButton.TabIndex = 6;
+            SignoutButton.Text = "Signout";
+            SignoutButton.UseVisualStyleBackColor = true;
+            SignoutButton.Click += SignoutButton_Click;
             // 
-            // UsernameTextBox
+            // OfflineUsernameLabel
             // 
-            UsernameTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            UsernameTextBox.Location = new Point(3, 18);
-            UsernameTextBox.Name = "UsernameTextBox";
-            UsernameTextBox.Size = new Size(186, 23);
-            UsernameTextBox.TabIndex = 1;
-            UsernameTextBox.Text = "steve";
+            OfflineUsernameLabel.AutoSize = true;
+            OfflineUsernameLabel.Location = new Point(3, 0);
+            OfflineUsernameLabel.Name = "OfflineUsernameLabel";
+            OfflineUsernameLabel.Size = new Size(101, 15);
+            OfflineUsernameLabel.TabIndex = 0;
+            OfflineUsernameLabel.Text = "Offline username:";
+            // 
+            // OfflineUsernameTextBox
+            // 
+            OfflineUsernameTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            OfflineUsernameTextBox.Location = new Point(3, 18);
+            OfflineUsernameTextBox.Name = "OfflineUsernameTextBox";
+            OfflineUsernameTextBox.Size = new Size(186, 23);
+            OfflineUsernameTextBox.TabIndex = 1;
+            OfflineUsernameTextBox.Text = "steve";
+            OfflineUsernameTextBox.Visible = false;
+            // 
+            // OnlineAccountsLabel
+            // 
+            OnlineAccountsLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            OnlineAccountsLabel.AutoSize = true;
+            OnlineAccountsLabel.Location = new Point(3, 44);
+            OnlineAccountsLabel.Name = "OnlineAccountsLabel";
+            OnlineAccountsLabel.Size = new Size(91, 15);
+            OnlineAccountsLabel.TabIndex = 3;
+            OnlineAccountsLabel.Text = "Online account:";
+            // 
+            // AccountsComboBox
+            // 
+            AccountsComboBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            AccountsComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            AccountsComboBox.FormattingEnabled = true;
+            AccountsComboBox.Location = new Point(3, 62);
+            AccountsComboBox.Name = "AccountsComboBox";
+            AccountsComboBox.Size = new Size(186, 23);
+            AccountsComboBox.TabIndex = 4;
+            // 
+            // ChangeAccountModeButton
+            // 
+            ChangeAccountModeButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            ChangeAccountModeButton.Location = new Point(3, 167);
+            ChangeAccountModeButton.Name = "ChangeAccountModeButton";
+            ChangeAccountModeButton.Size = new Size(186, 32);
+            ChangeAccountModeButton.TabIndex = 5;
+            ChangeAccountModeButton.Text = "Switch to online mode";
+            ChangeAccountModeButton.UseVisualStyleBackColor = true;
+            ChangeAccountModeButton.Click += ChangeAccountModeButton_Click;
             // 
             // MicrosoftLoginButton
             // 
             MicrosoftLoginButton.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            MicrosoftLoginButton.Location = new Point(3, 47);
+            MicrosoftLoginButton.Location = new Point(3, 129);
             MicrosoftLoginButton.Name = "MicrosoftLoginButton";
             MicrosoftLoginButton.Size = new Size(186, 32);
             MicrosoftLoginButton.TabIndex = 2;
-            MicrosoftLoginButton.Text = "Login Using Microsoft";
+            MicrosoftLoginButton.Text = "Add Microsoft account";
             MicrosoftLoginButton.UseVisualStyleBackColor = true;
             MicrosoftLoginButton.Click += MicrosoftLoginButton_Click;
             // 
@@ -211,16 +267,18 @@
             PlayTableLayoutPanel.Controls.Add(PlayLabel, 0, 0);
             PlayTableLayoutPanel.Controls.Add(PlayVersionComboBox, 0, 1);
             PlayTableLayoutPanel.Controls.Add(PlayControlsTableLayoutPanel, 0, 2);
-            PlayTableLayoutPanel.Controls.Add(MemoryLabel, 0, 3);
-            PlayTableLayoutPanel.Controls.Add(MemoryTrackBar, 0, 4);
+            PlayTableLayoutPanel.Controls.Add(MemoryTrackBar, 0, 5);
+            PlayTableLayoutPanel.Controls.Add(MemoryLabel, 0, 4);
+            PlayTableLayoutPanel.Controls.Add(UpdateCheckBox, 0, 3);
             PlayTableLayoutPanel.Location = new Point(300, 142);
             PlayTableLayoutPanel.MinimumSize = new Size(0, 150);
             PlayTableLayoutPanel.Name = "PlayTableLayoutPanel";
-            PlayTableLayoutPanel.RowCount = 5;
+            PlayTableLayoutPanel.RowCount = 6;
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle());
+            PlayTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
             PlayTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             PlayTableLayoutPanel.Size = new Size(192, 273);
             PlayTableLayoutPanel.TabIndex = 2;
@@ -282,19 +340,10 @@
             RefreshButton.UseVisualStyleBackColor = true;
             RefreshButton.Click += RefreshButton_Click;
             // 
-            // MemoryLabel
-            // 
-            MemoryLabel.AutoSize = true;
-            MemoryLabel.Location = new Point(3, 93);
-            MemoryLabel.Name = "MemoryLabel";
-            MemoryLabel.Size = new Size(106, 15);
-            MemoryLabel.TabIndex = 3;
-            MemoryLabel.Text = "Runtime Memory: ";
-            // 
             // MemoryTrackBar
             // 
             MemoryTrackBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            MemoryTrackBar.Location = new Point(3, 111);
+            MemoryTrackBar.Location = new Point(3, 151);
             MemoryTrackBar.Maximum = 1;
             MemoryTrackBar.Minimum = 1;
             MemoryTrackBar.Name = "MemoryTrackBar";
@@ -302,6 +351,31 @@
             MemoryTrackBar.TabIndex = 4;
             MemoryTrackBar.Value = 1;
             MemoryTrackBar.ValueChanged += MemoryTrackBar_ValueChanged;
+            // 
+            // MemoryLabel
+            // 
+            MemoryLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            MemoryLabel.AutoSize = true;
+            MemoryLabel.Location = new Point(3, 133);
+            MemoryLabel.Name = "MemoryLabel";
+            MemoryLabel.Size = new Size(106, 15);
+            MemoryLabel.TabIndex = 3;
+            MemoryLabel.Text = "Runtime Memory: ";
+            // 
+            // UpdateCheckBox
+            // 
+            UpdateCheckBox.Anchor = AnchorStyles.Top;
+            UpdateCheckBox.AutoSize = true;
+            UpdateCheckBox.CheckAlign = ContentAlignment.MiddleRight;
+            UpdateCheckBox.Checked = true;
+            UpdateCheckBox.CheckState = CheckState.Checked;
+            UpdateCheckBox.Location = new Point(35, 96);
+            UpdateCheckBox.Name = "UpdateCheckBox";
+            UpdateCheckBox.Size = new Size(122, 19);
+            UpdateCheckBox.TabIndex = 5;
+            UpdateCheckBox.Text = "Check for updates";
+            UpdateCheckBox.TextAlign = ContentAlignment.MiddleRight;
+            UpdateCheckBox.UseVisualStyleBackColor = true;
             // 
             // RootTableLayoutPanel
             // 
@@ -382,8 +456,8 @@
         private TableLayoutPanel ProgressTrackerTableLayoutPanel;
         private Label StatusLabel;
         private TableLayoutPanel UsernameTableLayoutPanel;
-        private Label UsernameLabel;
-        private TextBox UsernameTextBox;
+        private Label OfflineUsernameLabel;
+        private TextBox OfflineUsernameTextBox;
         private TableLayoutPanel DownloadTableLayoutPanel;
         private Label DownloadLabel;
         private ComboBox DownloadsComboBox;
@@ -400,5 +474,10 @@
         private Button MicrosoftLoginButton;
         private Label MemoryLabel;
         private TrackBar MemoryTrackBar;
+        private Label OnlineAccountsLabel;
+        private ComboBox AccountsComboBox;
+        private Button ChangeAccountModeButton;
+        private Button SignoutButton;
+        private CheckBox UpdateCheckBox;
     }
 }

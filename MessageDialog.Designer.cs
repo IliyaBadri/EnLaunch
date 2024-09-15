@@ -38,7 +38,8 @@
             // 
             TitleLabel.AutoSize = true;
             TitleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            TitleLabel.Location = new Point(50, 50);
+            TitleLabel.Location = new Point(30, 30);
+            TitleLabel.Margin = new Padding(30, 0, 30, 0);
             TitleLabel.Name = "TitleLabel";
             TitleLabel.Size = new Size(64, 32);
             TitleLabel.TabIndex = 0;
@@ -47,7 +48,8 @@
             // TextLabel
             // 
             TextLabel.AutoSize = true;
-            TextLabel.Location = new Point(70, 100);
+            TextLabel.Location = new Point(50, 70);
+            TextLabel.Margin = new Padding(50, 0, 50, 0);
             TextLabel.Name = "TextLabel";
             TextLabel.Size = new Size(28, 15);
             TextLabel.TabIndex = 1;
@@ -55,7 +57,8 @@
             // 
             // OkButton
             // 
-            OkButton.Location = new Point(250, 200);
+            OkButton.Location = new Point(30, 150);
+            OkButton.Margin = new Padding(30, 3, 30, 3);
             OkButton.Name = "OkButton";
             OkButton.Size = new Size(75, 23);
             OkButton.TabIndex = 2;
@@ -67,7 +70,8 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(384, 261);
+            AutoSize = true;
+            ClientSize = new Size(384, 211);
             Controls.Add(OkButton);
             Controls.Add(TextLabel);
             Controls.Add(TitleLabel);

@@ -4,10 +4,23 @@ EnLaunch is a simple and efficient Minecraft launcher developed using C# and Win
 
 ## Features
 
-- **Simple Interface**: Easy-to-use Windows Forms interface.
+- **Simple Interface**: Easy-to-use Windows Forms interface. All features in one window.
 - **Minecraft Version Management**: Supports multiple Minecraft versions.
+- **External client support**: Added support for Fabric, Forge and any version you can imagine.
+- **Robust account management**: Save multiple Microsoft accounts with ease.
+- **Robust download system**: Automatically download and install Minecraft resources and Java runtimes.
 
 ## Installation
+To install this product using the installer you can follow these steps:
+
+1. **Head to releases page**: You can find the latest release installer [here](https://github.com/IliyaBadri/EnLaunch/releases/latest).
+2.  **Download the installer**: Download the file named `EnLaunch_Installer.exe`.
+3. **Run the installer**: After the download was complete open the executable file.
+4. **Follow the instructions to install the program**: The installer will guide you through the installation process.
+5. **Run the app for the first time**: The first time you open the launcher it will ask you to enter your game path. This could be a new folder anywhere in your computer (recommended) that you create or the default path of your previous launcher. After you have entered the path hit Continue.
+6. **All done**: Now you can download and install a new vanilla version and sign in to your account and start playing.
+
+## Open-Source Installation
 
 To get started with EnLaunch, follow these steps:
 
