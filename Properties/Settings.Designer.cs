@@ -46,5 +46,29 @@ namespace EnLaunch.Properties {
                 this["MinecraftPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("steve")]
+        public string OfflineUsername {
+            get {
+                return ((string)(this["OfflineUsername"]));
+            }
+            set {
+                this["OfflineUsername"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int PreviousRamAmount {
+            get {
+                return ((int)(this["PreviousRamAmount"]));
+            }
+            set {
+                this["PreviousRamAmount"] = value;
+            }
+        }
     }
 }
